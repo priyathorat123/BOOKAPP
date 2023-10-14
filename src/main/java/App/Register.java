@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -14,7 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/register")
 public class Register extends HttpServlet {
-	 public static final String query="insert into bookdata1(id,bookname,bookedition,bookprice) values(?,?,?,?) ";
+	 public static final String query="insert into bookdata3(bookname,bookEdition,bookprice) values(?,?,?) ";
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		res.setContentType("text/html");
@@ -25,39 +26,48 @@ public class Register extends HttpServlet {
 		
 		int count=0;
 		try {
-			Class.forName("com.mysql.jdbc.Driver.");
-			Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/book","root","password");
-			PreparedStatement pstmt=con.prepareStatement(query);
+			Class.forName("com.mysql.cj.jdbc.Driver");
+		}catch(ClassNotFoundException c) {
+			c.printStackTrace();
+		}
+		try(
+			Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/book1","root","password");
+				
+			PreparedStatement pstmt=con.prepareStatement(query);){
 			
-			pstmt.setInt(1, 101);
-			pstmt.setString(2,bname);
-			pstmt.setString(3,bedi);
-			pstmt.setFloat(4,bprice);
 			
-			pstmt.execute();
-			count++;
-			con.commit();
+			pstmt.setString(1,bname);
+			pstmt.setString(2,bedi);
+			pstmt.setFloat(3,bprice);
+			
+			count=pstmt.executeUpdate();
+			if(count==1) {
+			    out.println("<h3 style='color:green;text-align:center'>data inserted successfully!!!</h3>");
+			    
+			}
+			else {
+				out.println("<h3 style='color:red; text-align:center'>oops something went wrong!!!</h3><br><br>");
+				RequestDispatcher rd=req.getRequestDispatcher("index.html");
+				rd.include(req, res);
+				
+			}
+			
 			con.close();
 			
-		}catch(Exception e) {
+		}catch(SQLException e) {
 			e.printStackTrace();
-			System.out.println(e.getMessage());
+			out.println("<h2>"+e.getMessage()+"</h2>");
 			
 		}
-		if(count==1) {
-		    out.println("<h3 style='color:green;text-align:center'>data inserted successfully!!!</h3>");
-		    out.println("<a href='booklist'>Book list</a>");
-		}
-		else {
-			out.println("<h3 style='color:red; text-align:center'>oops something went wrong!!!</h3><br><br>");
-			RequestDispatcher rd=req.getRequestDispatcher("index.html");
-			rd.include(req, res);
+		catch(Exception e1) {
+			e1.printStackTrace();
+			out.println("<h2>"+e1.getMessage()+"</h2>");
 			
 		}
+		out.println("<a href=\"index.html\">Home</a>");	
+		out.println("<br>");
+		out.println("<a href=\"booklist\">Book list</a>");	
 		
-		out.println("<h1>"+bname+"</h1>");
-		out.println("<h1>"+bedi+"</h1>");
-		out.println("<h1>"+bprice+"</h1>");
 	}
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
